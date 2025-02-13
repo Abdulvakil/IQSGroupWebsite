@@ -56,6 +56,7 @@ const ComputersCanvas = () => {
 
   return(
     <Canvas
+      className={`${isMobile ? "pointer-events-none" : ""}` }
       frameLoop="demand"
       shadows
       camera={{position: [30, 10, 5], fov: 25 }}
@@ -64,10 +65,16 @@ const ComputersCanvas = () => {
         
         <Suspense fallback={<CanvasLoader />}>
         <OrbitControls 
-        enableZoom={false}
-        maxPolarAngle={Math.PI / 2}
-        minPolarAngle={Math.PI / 2} />
-        <Computers isMobile={isMobile}/>
+          autoRotate
+          autoRotateSpeed={0.8} 
+          enableZoom={false} 
+          enablePan={false} 
+          enableRotate={true} 
+          rotateSpeed={0.5} 
+          dampingFactor={0.05} /* Smooths manual rotation */
+          makeDefault
+        />
+        <Computers isMobile ={isMobile}/>
         
         
         </Suspense>

@@ -12,7 +12,7 @@ const Hero = () => {
           <div className="w-1 sm:h-80 h-40 violet-gradient" />
         </div>
 
-        <div>
+        <div className="relative z-10">
           <h1 className={`${styles.heroHeadText} text-black`}>Hi, We Are <span className="text-tertiary">IQS!</span></h1>
           <p className={`${styles.heroSubText} mt-2 text-black`}>We are built on integrity, driven by quality,<br className="sm:block hidden" />and dedicated to your satisfaction.</p>
         </div>
