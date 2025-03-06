@@ -1,90 +1,102 @@
-import { Suspense, useRef, useEffect, useState } from 'react'
-
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Preload, useGLTF } from '@react-three/drei';
+import { Suspense, useEffect, useState, useRef, useMemo } from 'react';
+import { Canvas, useLoader, useFrame } from '@react-three/fiber';
+import { OrbitControls, Preload, useGLTF, Environment } from '@react-three/drei';
+import * as THREE from 'three';
+import { DRACOLoader, RGBELoader } from 'three-stdlib';
 import CanvasLoader from '../Loader';
 
-import { Environment } from '@react-three/drei';
-
 const Computers = ({ isMobile }) => {
+  const truckRef = useRef();
 
-  const truck = useGLTF('./truck/scene.gltf') 
+  const dracoLoader = new DRACOLoader;
+  dracoLoader.setDecoderPath
+  const truck = useGLTF('./truck/scenedraco.glb');
+
+  const envMap = useMemo(() => useLoader(RGBELoader, '/hdri/envmap.hdr'), []);
+
+  
+  useEffect(() => {
+
+    if (!truck || !truck.scene || !envMap) return;
+    truck.scene.environment = envMap;
+    truck.scene.traverse((child) => {
+      if (child.isMesh) {
+        child.material = child.material.clone();
+        child.material.metalness = 0.8;
+        child.material.roughness = 0.4;
+        child.material.envMapIntensity = 0.1;
+        child.material.needsUpdate = true;
+      }
+    });
+  }, [truck, envMap]);
+
+  useFrame(() => {
+    if (truckRef.current) {
+      truckRef.current.rotation.y += 0.005;
+    }
+  });
 
   return (
-    <mesh>
-      
+    <mesh ref={truckRef}>
       <primitive 
-      object={truck.scene}
-      scale={isMobile ? 0.8 : 1.2}
-      position={isMobile ? [0, -3, 0] : [0, -4, 0]}
-      rotation={[-0.01, 2.1, 0]}
-      
+        object={truck.scene}
+        scale={isMobile ? 0.8 : 1.2}
+        position={isMobile ? [0, -3, 0] : [0, -4, 0]}
+        rotation={[-0.01, 2.1, 0]}
       />
-      <spotLight position={[15, 5, 20]} angle={1} penumbra={1} intensity={5000} castShadow shadow-mapSize={1024} />
-      <spotLight position={[-5, 5, -20]} angle={1} penumbra={1} intensity={4000} castShadow shadow-mapSize={1024} />
-      <spotLight position={[-30, 0, 15]} angle={1} penumbra={1} intensity={5000} castShadow shadow-mapSize={1024} />
-      <spotLight position={[20, 20, -20]} angle={1} penumbra={1} intensity={10000} castShadow shadow-mapSize={1024} />
-      <ambientLight intensity={2} />
-
+      
     </mesh>
-    
-  )
-}
-
-
+  );
+};
 
 const ComputersCanvas = () => {
-
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 500px)');
-
     setIsMobile(mediaQuery.matches);
-
-    const handleMediaQueryChange = (event) => {
-      setIsMobile(event.matches);
-    }
-
+    const handleMediaQueryChange = (event) => setIsMobile(event.matches);
     mediaQuery.addEventListener('change', handleMediaQueryChange);
+    return () => mediaQuery.removeEventListener('change', handleMediaQueryChange);
+  }, []);
 
-    return () => {
-      mediaQuery.removeEventListener('change', handleMediaQueryChange);
-    }
-
-  }, [])
-
-  return(
+  return (
     <Canvas
-      className={`${isMobile ? "pointer-events-none" : ""}` }
-      frameLoop="demand"
-      shadows
+      frameloop='demand'
+      dpr={[0.9, 1]}
       camera={{position: [30, 10, 5], fov: 25 }}
-      gl={{ preserveDrawingBuffer: true}}>
-
-        
-        <Suspense fallback={<CanvasLoader />}>
-        <OrbitControls 
-          autoRotate
+      shadows
+      gl={{ antialias: true, preserveDrawingBuffer: false }}
+    >
+      <Suspense fallback={<CanvasLoader />}>
+      <OrbitControls 
+          
+          autoRotate 
           autoRotateSpeed={0.8} 
           enableZoom={false} 
           enablePan={false} 
           enableRotate={true} 
-          rotateSpeed={0.5} 
+          rotateSpeed={0.8} 
+          enableDamping={true}
           dampingFactor={0.05} /* Smooths manual rotation */
           makeDefault
         />
-        <Computers isMobile ={isMobile}/>
+
+        {/* Lighting */}
+        <spotLight position={[0, 25, 0]} intensity={30} castShadow shadow-bias={-0.0001} />
         
-        
-        </Suspense>
+        {/* Environment */}
+        <Environment files='/hdri/envmap.hdr' background={false} blur={0.1} rotation={[0, 0, 0]}/>
+
+        {/* Ground Plane */}
         
 
-        <Preload all />
+        {/* 3D Model */}
+        <Computers isMobile={isMobile} />
+      </Suspense>
+      <Preload all />
     </Canvas>
-
-  )
-}
-
+  );
+};
 
 export default ComputersCanvas;
