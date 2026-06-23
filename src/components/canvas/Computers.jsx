@@ -4,13 +4,16 @@ import { OrbitControls, Preload, useGLTF, Environment } from '@react-three/drei'
 import * as THREE from 'three';
 import { DRACOLoader, RGBELoader } from 'three-stdlib';
 import CanvasLoader from '../Loader';
+import { useThree } from "@react-three/fiber";
+
 
 const Computers = ({ isMobile }) => {
   const truckRef = useRef();
 
-  const dracoLoader = new DRACOLoader;
-  dracoLoader.setDecoderPath
-  const truck = useGLTF('./truck/scenedraco.glb');
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('/draco/');
+
+  const truck = useGLTF('./truck/lala.glb');
 
   const envMap = useMemo(() => useLoader(RGBELoader, '/hdri/envmap.hdr'), []);
 
@@ -29,6 +32,7 @@ const Computers = ({ isMobile }) => {
       }
     });
   }, [truck, envMap]);
+
 
   useFrame(() => {
     if (truckRef.current) {
@@ -50,6 +54,15 @@ const Computers = ({ isMobile }) => {
 };
 
 const ComputersCanvas = () => {
+  const DisableShaderChecks = () => {
+    const { gl } = useThree();
+    
+    useEffect(() => {
+      gl.debug.checkShaderErrors = false;
+    }, [gl]);
+  
+    return null;
+  };
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -62,28 +75,27 @@ const ComputersCanvas = () => {
 
   return (
     <Canvas
-      frameloop='demand'
-      dpr={[0.9, 1]}
-      camera={{position: [30, 10, 5], fov: 25 }}
-      shadows
-      gl={{ antialias: true, preserveDrawingBuffer: false }}
+    
+      frameloop="always"
+  dpr={[1, 2]}
+  camera={{ position: [30, 0, 5], fov: 25 }}
+  shadows
+  gl={{ antialias: true, preserveDrawingBuffer: false }}
     >
+      <DisableShaderChecks /> {/* This disables shader checks */}
+      
       <Suspense fallback={<CanvasLoader />}>
       <OrbitControls 
           
-          autoRotate 
-          autoRotateSpeed={0.8} 
-          enableZoom={false} 
-          enablePan={false} 
-          enableRotate={true} 
-          rotateSpeed={0.8} 
-          enableDamping={true}
-          dampingFactor={0.05} /* Smooths manual rotation */
-          makeDefault
+          
+
+          enableZoom={false}
+  enablePan={false}
+  enableRotate={false}
+  enabled={false}
         />
 
-        {/* Lighting */}
-        <spotLight position={[0, 25, 0]} intensity={30} castShadow shadow-bias={-0.0001} />
+        
         
         {/* Environment */}
         <Environment files='/hdri/envmap.hdr' background={false} blur={0.1} rotation={[0, 0, 0]}/>
